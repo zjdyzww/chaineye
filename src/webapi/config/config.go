@@ -96,6 +96,12 @@ type Config struct {
 	Clusters             []ClusterOptions
 	Ibex                 Ibex
 	OIDC                 oidcc.Config
+	XuperChain           XuperChain
+}
+
+type XuperChain struct {
+	XuperSdkYmlPath string
+	XuperChainNode  string
 }
 
 type ClusterOptions struct {

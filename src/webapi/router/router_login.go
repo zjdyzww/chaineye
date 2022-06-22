@@ -60,17 +60,17 @@ func loginPost(c *gin.Context) {
 }
 
 func logoutPost(c *gin.Context) {
-	metadata, err := extractTokenMetadata(c.Request)
+	_, err := extractTokenMetadata(c.Request)
 	if err != nil {
 		ginx.NewRender(c, http.StatusBadRequest).Message("failed to parse jwt token")
 		return
 	}
 
-	delErr := deleteTokens(c.Request.Context(), metadata)
-	if delErr != nil {
-		ginx.NewRender(c).Message(http.StatusText(http.StatusInternalServerError))
-		return
-	}
+	// delErr := deleteTokens(c.Request.Context(), metadata)
+	// if delErr != nil {
+	// 	ginx.NewRender(c).Message(http.StatusText(http.StatusInternalServerError))
+	// 	return
+	// }
 
 	ginx.NewRender(c).Message("")
 }

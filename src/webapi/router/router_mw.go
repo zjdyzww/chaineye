@@ -2,10 +2,12 @@ package router
 
 import (
 	"context"
+	"crypto/md5"
+	"encoding/hex"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"net/http"
-	"strconv"
 	"strings"
 	"time"
 
@@ -13,6 +15,7 @@ import (
 	"github.com/golang-jwt/jwt"
 	"github.com/google/uuid"
 	"github.com/toolkits/pkg/ginx"
+	"github.com/wenzhenxi/gorsa"
 
 	"github.com/didi/nightingale/v5/src/models"
 	"github.com/didi/nightingale/v5/src/storage"
@@ -31,26 +34,33 @@ func jwtAuth() gin.HandlerFunc {
 			ginx.Bomb(http.StatusUnauthorized, "unauthorized")
 		}
 
-		userIdentity, err := fetchAuth(c.Request.Context(), metadata.AccessUuid)
-		if err != nil {
+		// userIdentity, err := fetchAuth(c.Request.Context(), metadata.AccessUuid)
+		// if err != nil {
+		// 	ginx.Bomb(http.StatusUnauthorized, "unauthorized")
+		// }
+
+		// // ${userid}-${username}
+		// arr := strings.SplitN(userIdentity, "-", 2)
+		// if len(arr) != 2 {
+		// 	ginx.Bomb(http.StatusUnauthorized, "unauthorized")
+		// }
+
+		// userid, err := strconv.ParseInt(arr[0], 10, 64)
+		// if err != nil {
+		// 	ginx.Bomb(http.StatusUnauthorized, "unauthorized")
+		// }
+		if metadata.AccessUuid != "" {
+			c.Set("userid", "1")
+			c.Set("username", "root")
+			c.Next()
+		} else {
 			ginx.Bomb(http.StatusUnauthorized, "unauthorized")
 		}
 
-		// ${userid}-${username}
-		arr := strings.SplitN(userIdentity, "-", 2)
-		if len(arr) != 2 {
-			ginx.Bomb(http.StatusUnauthorized, "unauthorized")
-		}
+		// c.Set("userid", userid)
+		// c.Set("username", arr[1])
 
-		userid, err := strconv.ParseInt(arr[0], 10, 64)
-		if err != nil {
-			ginx.Bomb(http.StatusUnauthorized, "unauthorized")
-		}
-
-		c.Set("userid", userid)
-		c.Set("username", arr[1])
-
-		c.Next()
+		// c.Next()
 	}
 }
 
@@ -213,8 +223,25 @@ func admin() gin.HandlerFunc {
 	}
 }
 
+// 与产业大脑 RSA 解密 token 的公钥一致
+var PubKey = `-----BEGIN 公钥-----
+MIGfMA0GCSqGSIb3DQEBAQUAA4GNADCBiQKBgQDF0KvU+madkXy6Ij9RblPbFcARktp+VdIb9StULenzpfSK2PzMh+4iS3LVqTbAeMT9B+gvTEeXlcp/7vO8CaumJAQ9ID3gDpddpOTYTXMF8sMP52kAiaJzHik7idfesHNRv2N8IfM4ZlhLyydlrImJ61oEcP6WgE4xWcRqpXdBUQIDAQAB
+-----END 公钥-----
+`
+
+// parseRSAToken 用公钥解密 RSA 私钥加密的方法
+func parseRSAToken(token string) (string, error) {
+	resultToken, err := gorsa.PublicDecrypt(token, PubKey)
+	if err != nil {
+		return "", err
+	}
+	// fmt.Println("--------------", resultToken)
+	return resultToken, nil
+}
+
 func extractTokenMetadata(r *http.Request) (*AccessDetails, error) {
-	token, err := verifyToken(config.C.JWTAuth.SigningKey, extractToken(r))
+	// token, err := verifyToken(config.C.JWTAuth.SigningKey, extractToken(r))
+	token, err := verifyToken(extractToken(r))
 	if err != nil {
 		return nil, err
 	}
@@ -238,11 +265,14 @@ func extractTokenMetadata(r *http.Request) (*AccessDetails, error) {
 func extractToken(r *http.Request) string {
 	tok := r.Header.Get("Authorization")
 
-	if len(tok) > 6 && strings.ToUpper(tok[0:7]) == "BEARER " {
-		return tok[7:]
+	// if len(tok) > 6 && strings.ToUpper(tok[0:7]) == "BEARER " {
+	// 	return tok[7:]
+	// }
+	s, err := parseRSAToken(tok)
+	if err != nil {
+		return ""
 	}
-
-	return ""
+	return s
 }
 
 func createAuth(ctx context.Context, userIdentity string, td *TokenDetails) error {
@@ -338,11 +368,24 @@ func createTokens(signingKey, userIdentity string) (*TokenDetails, error) {
 	return td, nil
 }
 
-func verifyToken(signingKey, tokenString string) (*jwt.Token, error) {
+func verifyToken(tokenString string) (*jwt.Token, error) {
 	if tokenString == "" {
-		return nil, fmt.Errorf("bearer token not found")
+		return nil, fmt.Errorf("Bearer token not found")
 	}
 
+	// 解析token 获得用户ID
+	result, err := jwt.DecodeSegment(strings.Split(tokenString, ".")[1])
+	if err != nil {
+		return nil, err
+	}
+	var tmp = make(map[string]interface{})
+	err = json.Unmarshal(result, &tmp)
+	if err != nil {
+		return nil, err
+	}
+	userID := tmp["userId"].(string)
+	// 生成secert 校验
+	signingKey := getJwtSecret(userID)
 	token, err := jwt.Parse(tokenString, func(token *jwt.Token) (interface{}, error) {
 		if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
 			return nil, fmt.Errorf("unexpected jwt signing method: %v", token.Header["alg"])
@@ -353,4 +396,13 @@ func verifyToken(signingKey, tokenString string) (*jwt.Token, error) {
 		return nil, err
 	}
 	return token, nil
+}
+
+// getJwtSecret 与产业大脑生成签名秘钥的方法一致 32位的MD5加密 需要 userid
+func getJwtSecret(userID string) string {
+	// fmt.Println("userID", userID)
+	var jwtSecret = "shengjian.net+sdaflewkffreg"
+	h := md5.New()
+	h.Write([]byte(userID + jwtSecret))
+	return hex.EncodeToString(h.Sum(nil))
 }

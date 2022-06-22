@@ -108,7 +108,7 @@ func configRoute(r *gin.Engine, version string) {
 			c.String(200, version)
 		})
 
-		pages.POST("/auth/login", loginPost)
+		// pages.POST("/auth/login", loginPost)
 		pages.POST("/auth/logout", logoutPost)
 		pages.POST("/auth/refresh", refreshPost)
 
@@ -122,6 +122,9 @@ func configRoute(r *gin.Engine, version string) {
 		pages.GET("/notify-channels", notifyChannelsGets)
 		pages.GET("/contact-keys", contactKeysGets)
 		pages.GET("/clusters", clustersGets)
+
+		pages.GET("/xuperchain/contract/count", jwtAuth(), getXuperChainContractCount)
+		pages.GET("/xuperchain/tx/query", jwtAuth(), getXuperChainTx)
 
 		pages.GET("/self/perms", jwtAuth(), user(), permsGets)
 		pages.GET("/self/profile", jwtAuth(), user(), selfProfileGet)
