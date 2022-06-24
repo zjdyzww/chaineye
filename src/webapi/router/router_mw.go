@@ -5,7 +5,6 @@ import (
 	"crypto/md5"
 	"encoding/hex"
 	"encoding/json"
-	"errors"
 	"fmt"
 	"net/http"
 	"strings"
@@ -39,12 +38,11 @@ func jwtAuth() gin.HandlerFunc {
 		// 	ginx.Bomb(http.StatusUnauthorized, "unauthorized")
 		// }
 
-		// // ${userid}-${username}
+		// ${userid}-${username}
 		// arr := strings.SplitN(userIdentity, "-", 2)
 		// if len(arr) != 2 {
 		// 	ginx.Bomb(http.StatusUnauthorized, "unauthorized")
 		// }
-
 		// userid, err := strconv.ParseInt(arr[0], 10, 64)
 		// if err != nil {
 		// 	ginx.Bomb(http.StatusUnauthorized, "unauthorized")
@@ -56,11 +54,6 @@ func jwtAuth() gin.HandlerFunc {
 		} else {
 			ginx.Bomb(http.StatusUnauthorized, "unauthorized")
 		}
-
-		// c.Set("userid", userid)
-		// c.Set("username", arr[1])
-
-		// c.Next()
 	}
 }
 
@@ -235,12 +228,14 @@ func parseRSAToken(token string) (string, error) {
 	if err != nil {
 		return "", err
 	}
-	// fmt.Println("--------------", resultToken)
-	return resultToken, nil
+	b, err2 := hex.DecodeString(resultToken)
+	if err2 != nil {
+		return "", err
+	}
+	return string(b), nil
 }
 
 func extractTokenMetadata(r *http.Request) (*AccessDetails, error) {
-	// token, err := verifyToken(config.C.JWTAuth.SigningKey, extractToken(r))
 	token, err := verifyToken(extractToken(r))
 	if err != nil {
 		return nil, err
@@ -248,10 +243,9 @@ func extractTokenMetadata(r *http.Request) (*AccessDetails, error) {
 
 	claims, ok := token.Claims.(jwt.MapClaims)
 	if ok && token.Valid {
-		// accessUuid, ok := claims["access_uuid"].(string)
 		accessUuid, ok := claims["userId"].(string)
 		if !ok {
-			return nil, errors.New("failed to parse access_uuid from jwt")
+			return nil, err
 		}
 
 		return &AccessDetails{
@@ -373,7 +367,6 @@ func verifyToken(tokenString string) (*jwt.Token, error) {
 	if tokenString == "" {
 		return nil, fmt.Errorf("Bearer token not found")
 	}
-
 	// 解析token 获得用户ID
 	result, err := jwt.DecodeSegment(strings.Split(tokenString, ".")[1])
 	if err != nil {
