@@ -248,14 +248,15 @@ func extractTokenMetadata(r *http.Request) (*AccessDetails, error) {
 
 	claims, ok := token.Claims.(jwt.MapClaims)
 	if ok && token.Valid {
-		accessUuid, ok := claims["access_uuid"].(string)
+		// accessUuid, ok := claims["access_uuid"].(string)
+		accessUuid, ok := claims["userId"].(string)
 		if !ok {
 			return nil, errors.New("failed to parse access_uuid from jwt")
 		}
 
 		return &AccessDetails{
-			AccessUuid:   accessUuid,
-			UserIdentity: claims["user_identity"].(string),
+			AccessUuid: accessUuid,
+			// UserIdentity: claims["user_identity"].(string),
 		}, nil
 	}
 
