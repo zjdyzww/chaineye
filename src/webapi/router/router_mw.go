@@ -7,6 +7,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"strconv"
 	"strings"
 	"time"
 
@@ -59,9 +60,12 @@ func jwtAuth() gin.HandlerFunc {
 
 func user() gin.HandlerFunc {
 	return func(c *gin.Context) {
-		userid := c.MustGet("userid").(int64)
-
-		user, err := models.UserGetById(userid)
+		userid := c.MustGet("userid").(string)
+		userIdInt, err := strconv.Atoi(userid)
+		if err != nil {
+			ginx.Bomb(http.StatusUnauthorized, "unauthorized")
+		}
+		user, err := models.UserGetById(int64(userIdInt))
 		if err != nil {
 			ginx.Bomb(http.StatusUnauthorized, "unauthorized")
 		}
