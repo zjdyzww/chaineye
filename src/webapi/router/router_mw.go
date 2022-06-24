@@ -258,7 +258,7 @@ func extractTokenMetadata(r *http.Request) (*AccessDetails, error) {
 }
 
 func extractToken(r *http.Request) string {
-	tok := r.Header.Get("Authorization")
+	tok := r.Header.Get("jwttoken")
 
 	// if len(tok) > 6 && strings.ToUpper(tok[0:7]) == "BEARER " {
 	// 	return tok[7:]
