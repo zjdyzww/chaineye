@@ -94,7 +94,7 @@ func configRoute(r *gin.Engine, version string) {
 
 	r.GET("/metrics", gin.WrapH(promhttp.Handler()))
 
-	pagesPrefix := "/api/n9e"
+	pagesPrefix := "/chaineye/api/n9e"
 
 	pages := r.Group(pagesPrefix)
 	{
@@ -265,7 +265,7 @@ func configRoute(r *gin.Engine, version string) {
 		pages.PUT("/busi-group/:id/task/*url", jwtAuth(), user(), perm("/job-tasks/put"), bgrw(), taskProxy)
 	}
 
-	service := r.Group("/v1/n9e")
+	service := r.Group("/chaineye/v1/n9e")
 	if len(config.C.BasicAuth) > 0 {
 		service.Use(gin.BasicAuth(config.C.BasicAuth))
 	}
