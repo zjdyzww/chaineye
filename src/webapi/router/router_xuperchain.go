@@ -26,13 +26,27 @@ func getXuperChainContractCount(c *gin.Context) {
 	if err != nil {
 		ginx.Bomb(http.StatusInternalServerError, "new xuperchain sdk client failed")
 	}
+	// query contract counts
 	csdr, err := client.QueryContractCount(xuper.WithQueryBcname(f.ChainName))
 	if err != nil {
 		ginx.Bomb(http.StatusInternalServerError, "query contract count failed")
 	}
-	ginx.NewRender(c).Data(gin.H{
-		"counte": csdr.Data.ContractCount,
-	}, nil)
+	// query block height
+	b, err := client.QuerySystemStatus()
+	if err != nil {
+		ginx.Bomb(http.StatusInternalServerError, "query block height failed")
+	}
+	// query mint present address
+	status, err := client.QueryBlockChainStatus()
+	if err != nil {
+		ginx.Bomb(http.StatusInternalServerError, "query mint present address failed")
+	}
+	ginx.NewRender(c).Data(
+		gin.H{
+			"count":    csdr.Data.ContractCount,                   //返回合约数量
+			"height":   b.SystemsStatus.BcsStatus[0].Block.Height, // 返回当前区块高度
+			"proposer": status.Block.Proposer,                     // 返回当前打包区块的矿工地址
+		}, nil)
 }
 
 // query block or tx
@@ -46,29 +60,10 @@ func getXuperChainTx(c *gin.Context) {
 	if err != nil {
 		ginx.Bomb(http.StatusInternalServerError, "new xuperchain sdk client failed")
 	}
-	switch f.Type {
-	case ByTxId: // query by tx id
-		tx, err := client.QueryTxByID(f.Input, xuper.WithQueryBcname(f.ChainName))
-		if err != nil {
-			ginx.Bomb(http.StatusInternalServerError, "query Tx failed")
-		}
-		// query Block
-		block, err := client.QueryBlockByID(hex.EncodeToString(tx.Blockid), xuper.WithQueryBcname(f.ChainName))
-		if err != nil {
-			ginx.Bomb(http.StatusInternalServerError, "query Tx failed")
-		}
-		tdr, err := TxToTxRsp(tx, block)
-		if err != nil {
-			ginx.Bomb(http.StatusInternalServerError, "query Tx failed")
-		}
-		ginx.NewRender(c).Data(gin.H{
-			"transaction": tdr,
-		}, nil)
-	case ByBlockHeight: // query by block height
-		i, err := strconv.ParseInt(f.Input, 36, 10)
-		if err != nil {
-			ginx.Bomb(http.StatusInternalServerError, "query Tx failed")
-		}
+	// 正则判断查询条件 全数字按照区块高度查询 转换异常 按照交易hash 或者 区块hash查询
+	i, err := strconv.ParseUint(f.Input, 10, 64)
+	// err is nil 证明传入的是数字，按照区块高度查询
+	if err == nil {
 		b, err := client.QueryBlockByHeight(int64(i), xuper.WithQueryBcname(f.ChainName))
 		if err != nil {
 			ginx.Bomb(http.StatusInternalServerError, "query Tx failed")
@@ -80,20 +75,37 @@ func getXuperChainTx(c *gin.Context) {
 		ginx.NewRender(c).Data(gin.H{
 			"transaction": br,
 		}, nil)
-	case ByBlockId: // query by block id
-		b, err := client.QueryBlockByID(f.Input, xuper.WithQueryBcname(f.ChainName))
-		if err != nil {
-			ginx.Bomb(http.StatusInternalServerError, "query Tx failed")
+	} else {
+		// err is not nil。 先按照交易hash 查询
+		tx, err := client.QueryTxByID(f.Input, xuper.WithQueryBcname(f.ChainName))
+		if err == nil {
+			// query Block
+			block, err := client.QueryBlockByID(hex.EncodeToString(tx.Blockid), xuper.WithQueryBcname(f.ChainName))
+			if err != nil {
+				ginx.Bomb(http.StatusInternalServerError, "query Tx failed")
+			}
+			tdr, err := TxToTxRsp(tx, block)
+			if err != nil {
+				ginx.Bomb(http.StatusInternalServerError, "query Tx failed")
+			}
+			ginx.NewRender(c).Data(gin.H{
+				"transaction": tdr,
+			}, nil)
+		} else {
+			// 按照区块 hash 查询
+			b, err := client.QueryBlockByID(f.Input, xuper.WithQueryBcname(f.ChainName))
+			if err != nil {
+				ginx.Bomb(http.StatusInternalServerError, "query Tx failed")
+			}
+			br, err := blockToBlockRsp(b)
+			if err != nil {
+				ginx.Bomb(http.StatusInternalServerError, "query Tx failed")
+			}
+			ginx.NewRender(c).Data(gin.H{
+				"transaction": br,
+			}, nil)
 		}
-		br, err := blockToBlockRsp(b)
-		if err != nil {
-			ginx.Bomb(http.StatusInternalServerError, "query Tx failed")
-		}
-		ginx.NewRender(c).Data(gin.H{
-			"transaction": br,
-		}, nil)
 	}
-
 }
 
 func TxToTxRsp(tx *pb.Transaction, block *pb.Block) (TxDetailRsp, error) {
@@ -166,7 +178,6 @@ type ContractCountReq struct {
 type TxQueryReq struct {
 	ChainName string `json:"chain_name"`
 	Input     string `json:"input"`
-	Type      int    `json:"type"`
 }
 
 type BlockRsp struct {
