@@ -14,7 +14,7 @@
 - 支持对接 Grafana 作为补充可视化方案；
 
 ## 预览
-<img src="doc/img/overview.png" width="500">
+<img src="doc/img/overview.png" width="800">
 
 ## 快速安装
 - 前置:需要安装Prometheus或者其他工具作为数据源。已有正在运行的XuperChain网络。
@@ -31,8 +31,9 @@
 - 导入XuperChain监控大盘，XuperChain大盘文件路径 https://github.com/xuperchain/xbench/blob/master/conf/metric/grafana-xchain.json 下载后，在监控大盘中，导入即可。
 
 ## 超级链监控大盘预览
-<img src="doc/img/metric.png" width="500">
+<img src="doc/img/metric.png" width="800">
 
+## Nginx Server 配置
 ```shell
  location ~ ^/front_chaineye/ {
             root html;
