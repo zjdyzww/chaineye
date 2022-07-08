@@ -28,6 +28,7 @@
 - 最后，下载`chaineye`对应前端项目`front-chaineye`。仓库路径 https://github.com/shengjian-tech/front_chaineye
 - 克隆前端项目后，运行 `npm install` 和 `npm run build`。
 - 配置 `ngnix`。配置入下所示。
+- 访问`http://127.0.0.1:port/front_chaineye/login` 页面。账号：root 密码：root.2020  
 - 导入XuperChain监控大盘，XuperChain大盘文件路径 https://github.com/xuperchain/xbench/blob/master/conf/metric/grafana-xchain.json 下载后，在监控大盘中，导入即可。
 
 ## 超级链监控大盘预览
