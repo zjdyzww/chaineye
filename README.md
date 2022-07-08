@@ -13,6 +13,9 @@
 - 支持 Telegraf 作为监控数据采集方案；
 - 支持对接 Grafana 作为补充可视化方案；
 
+## 预览
+<img src="doc/img/overview.png" width="500">
+
 ## 快速安装
 - 前置:需要安装Prometheus或者其他工具作为数据源。已有正在运行的XuperChain网络。
 - 克隆项目到本地 项目地址 https://github.com/shengjian-tech/chaineye
