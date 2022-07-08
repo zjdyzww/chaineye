@@ -50,6 +50,3 @@
 ## 鸣谢
 [夜莺nightingale](https://github.com/ccfos/nightingale)  
 [XuperChain](https://github.com/xuperchain/xuperchain)
-## License
-
-[Apache License V2.0](https://github.com/shengjian-tech/chaineye/blob/main/LICENSE)
