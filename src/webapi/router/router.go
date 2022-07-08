@@ -125,6 +125,7 @@ func configRoute(r *gin.Engine, version string) {
 
 		pages.GET("/xuperchain/contract/count", jwtAuth(), getXuperChainContractCount)
 		pages.GET("/xuperchain/tx/query", jwtAuth(), getXuperChainTx)
+		pages.GET("/xuperchain/tx/line/chart", jwtAuth(), getXuperChainTxLineChart)
 
 		pages.GET("/self/perms", jwtAuth(), user(), permsGets)
 		pages.GET("/self/profile", jwtAuth(), user(), selfProfileGet)

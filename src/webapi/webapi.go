@@ -19,6 +19,7 @@ import (
 	"github.com/didi/nightingale/v5/src/webapi/prom"
 	"github.com/didi/nightingale/v5/src/webapi/router"
 	"github.com/didi/nightingale/v5/src/webapi/stat"
+	"github.com/didi/nightingale/v5/src/webapi/xuper_chain"
 )
 
 type Webapi struct {
@@ -123,8 +124,14 @@ func (a Webapi) initialize() (func(), error) {
 
 	// init http server
 	r := router.New(a.Version)
-	httpClean := httpx.Init(config.C.HTTP, r)
 
+	// init sync xuper height
+	go xuper_chain.SyncXuperBlockTimer()
+
+	// delete old xuper height data
+	go xuper_chain.DeleteXuperDataTimer()
+
+	httpClean := httpx.Init(config.C.HTTP, r)
 	// release all the resources
 	return func() {
 		loggerClean()
