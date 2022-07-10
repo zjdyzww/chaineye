@@ -88,6 +88,7 @@ type Config struct {
 	Log                  logx.Config
 	HTTP                 httpx.Config
 	JWTAuth              JWTAuth
+	ProxyAuth            ProxyAuth
 	BasicAuth            gin.Accounts
 	AnonymousAccess      AnonymousAccess
 	LDAP                 ldapx.LdapSection
@@ -139,6 +140,12 @@ type JWTAuth struct {
 	AccessExpired  int64
 	RefreshExpired int64
 	RedisKeyPrefix string
+}
+
+type ProxyAuth struct {
+	Enable            bool
+	HeaderUserNameKey string
+	DefaultRoles      []string
 }
 
 type AnonymousAccess struct {
