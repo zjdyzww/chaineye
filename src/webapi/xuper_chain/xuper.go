@@ -31,6 +31,7 @@ func SyncXuperBlock() {
 		logger.Error("sync xuper chain block failed", err.Error())
 		return
 	}
+	defer xuperClient.Close()
 	b, err := xuperClient.QuerySystemStatus()
 	if err != nil {
 		logger.Error("get chain system status failed", err.Error())

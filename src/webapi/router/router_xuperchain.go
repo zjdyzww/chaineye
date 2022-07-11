@@ -26,6 +26,7 @@ func getXuperChainContractCount(c *gin.Context) {
 	if err != nil {
 		ginx.Bomb(http.StatusInternalServerError, "new xuperchain sdk client failed")
 	}
+	defer client.Close()
 	// query contract counts
 	csdr, err := client.QueryContractCount(xuper.WithQueryBcname(chainName))
 	if err != nil {
@@ -76,6 +77,7 @@ func getXuperChainTx(c *gin.Context) {
 	if err != nil {
 		ginx.Bomb(http.StatusInternalServerError, "new xuperchain sdk client failed")
 	}
+	defer client.Close()
 	// 正则判断查询条件 全数字按照区块高度查询 转换异常 按照交易hash 或者 区块hash查询
 	i, err := strconv.ParseUint(input, 10, 64)
 	// err is nil 证明传入的是数字，按照区块高度查询

@@ -498,3 +498,23 @@ CREATE TABLE `task_record`
     KEY (`create_at`, `group_id`),
     KEY (`create_by`)
 ) ENGINE = InnoDB DEFAULT CHARSET = utf8mb4;
+
+-- ----------------------------
+-- Table structure for t_xuper
+-- ----------------------------
+DROP TABLE IF EXISTS `t_xuper`;
+CREATE TABLE `t_xuper`  (
+  `block_height` bigint NOT NULL COMMENT '区块高度，主键',
+  `block_hash` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NOT NULL COMMENT '区块hash',
+  `block_tx_count` bigint NOT NULL COMMENT '区块内的交易总数',
+  `total_tx_count` bigint NOT NULL COMMENT '链上交易总数',
+  `timestamp` bigint NOT NULL COMMENT '当前区块产生时间',
+  `chain_name` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL DEFAULT NULL COMMENT '链名',
+  PRIMARY KEY (`block_height`) USING BTREE
+) ENGINE = InnoDB CHARACTER SET = utf8mb4 COLLATE = utf8mb4_0900_ai_ci ROW_FORMAT = Dynamic;
+
+-- ----------------------------
+-- Records of t_xuper
+-- ----------------------------
+
+SET FOREIGN_KEY_CHECKS = 1;
