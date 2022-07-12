@@ -51,6 +51,9 @@ func handleProxyUser(c *gin.Context) *models.User {
 			UpdateBy: "system",
 		}
 		err = user.Add()
+		if err != nil {
+			ginx.Bomb(http.StatusInternalServerError, err.Error())
+		}
 	}
 	return user
 }
